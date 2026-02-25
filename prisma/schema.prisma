@@ -1,0 +1,66 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  analyses      Analysis[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Analysis {
+  id        String   @id @default(cuid())
+  userId    String
+  imageId   String?  // Can be a URL or data URI if small, but dataURIs are big. Let's not save full base64 to SQLite usually, but if small maybe ok? Let's not save imageBase64 in the DB, just the results. Or we can just store the history data.
+  imageUrl  String?
+  timestamp DateTime @default(now())
+  result    String   // Store serialized JSON of AnalysisResult
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
