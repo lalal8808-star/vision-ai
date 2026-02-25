@@ -84,11 +84,17 @@ export default function AnalyzePage() {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        // 거울 모드일 때 캡처 화면도 반전 저장
+        if (facingMode === 'user') {
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+        }
+
         ctx.drawImage(video, 0, 0);
         const imageData = canvas.toDataURL('image/jpeg', 0.8);
         setCapturedImage(imageData);
         stopCamera();
-    }, [stopCamera]);
+    }, [stopCamera, facingMode]);
 
     // Handle File Upload
     const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,7 +183,10 @@ export default function AnalyzePage() {
                             autoPlay
                             playsInline
                             muted
-                            style={{ display: isCameraOn ? 'block' : 'none' }}
+                            style={{
+                                display: isCameraOn ? 'block' : 'none',
+                                transform: facingMode === 'user' ? 'scaleX(-1)' : 'none'
+                            }}
                         />
                         <canvas ref={canvasRef} />
 
