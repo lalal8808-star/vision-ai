@@ -104,10 +104,48 @@ export default function AnalyzePage() {
         const reader = new FileReader();
         reader.onload = (event) => {
             const imageData = event.target?.result as string;
-            setCapturedImage(imageData);
-            stopCamera();
+
+            // 압축 및 리사이징 로직 추가
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const MAX_DIMENSION = 1600;
+
+                if (width > height) {
+                    if (width > MAX_DIMENSION) {
+                        height = Math.round((height * MAX_DIMENSION) / width);
+                        width = MAX_DIMENSION;
+                    }
+                } else {
+                    if (height > MAX_DIMENSION) {
+                        width = Math.round((width * MAX_DIMENSION) / height);
+                        height = MAX_DIMENSION;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.85);
+                    setCapturedImage(compressedData);
+                } else {
+                    // 캔버스 실패 시 원본 사용
+                    setCapturedImage(imageData);
+                }
+                stopCamera();
+            };
+            img.src = imageData;
         };
         reader.readAsDataURL(file);
+
+        // 입력 필드 초기화 (같은 사진을 연속으로 고를 때 작동하도록)
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     }, [stopCamera]);
 
     // Analyze Image
