@@ -235,7 +235,6 @@ export default function AnalyzePage() {
                                 ref={fileInputRef}
                                 type="file"
                                 accept="image/*"
-                                capture="environment"
                                 onChange={handleFileUpload}
                                 style={{ display: 'none' }}
                             />
